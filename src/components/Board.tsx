@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { MENU_ITEMS } from "../constants";
 import { actionItemClick } from "../slice/menuSlice";
 
+import socket from "../socket";
+
 const Board = () => {
   const dispatch = useDispatch();
 
@@ -60,7 +62,16 @@ const Board = () => {
       context.lineWidth = size;
     };
 
+    const handleChangeConfig = (config: { color: string; size: number }) => {
+      changeConfig(config.color, config.size);
+    };
+
     changeConfig(color, size);
+    socket.on("changeConfig", handleChangeConfig);
+
+    return () => {
+      socket.off("changeConfig", handleChangeConfig);
+    };
   }, [color, size]);
 
   useLayoutEffect(() => {
@@ -87,11 +98,13 @@ const Board = () => {
       shouldDraw.current = true;
 
       beginPath(e.clientX, e.clientY);
+      socket.emit("beginPath", { x: e.clientX, y: e.clientY });
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!shouldDraw.current) return;
       drawLine(e.clientX, e.clientY);
+      socket.emit("drawLine", { x: e.clientX, y: e.clientY });
     };
 
     const handleMouseUp = () => {
@@ -103,14 +116,28 @@ const Board = () => {
       historyPointer.current = drawHistory.current.length - 1;
     };
 
+    const handleBeginPath = (path: { x: number; y: number }) => {
+      beginPath(path.x, path.y);
+    };
+
+    const handleDrawLine = (path: { x: number; y: number }) => {
+      drawLine(path.x, path.y);
+    };
+
     canvas.addEventListener("mousedown", handleMouseDown);
     canvas.addEventListener("mousemove", handleMouseMove);
     canvas.addEventListener("mouseup", handleMouseUp);
+
+    socket.on("beginPath", handleBeginPath);
+    socket.on("drawLine", handleDrawLine);
 
     return () => {
       canvas.removeEventListener("mousedown", handleMouseDown);
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("mouseup", handleMouseUp);
+
+      socket.off("beginPath", handleBeginPath);
+      socket.off("drawLine", handleDrawLine);
     };
   }, []);
 

@@ -4,6 +4,7 @@ import { changeColor, changeBrushSize } from "../slice/toolBoxSlice";
 import { RootState } from "../store";
 import { ReactEventHandler } from "react";
 import { menuItemClick } from "../slice/menuSlice";
+import socket from "../socket";
 
 function Toolbox() {
   const dispatch = useDispatch();
@@ -16,12 +17,12 @@ function Toolbox() {
 
   const updateBrushSize = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(changeBrushSize({ item: activeMenuItem, size: e.target.value }));
-    // socket.emit('changeConfig', {color, size: e.target.value })
+    socket.emit("changeConfig", { color, size: e.target.value });
   };
 
   const updateColor = (newColor: string) => {
     dispatch(changeColor({ item: activeMenuItem, color: newColor }));
-    // socket.emit('changeConfig', {color: newColor, size })
+    socket.emit("changeConfig", { color: newColor, size });
   };
 
   console.log(color, size, activeMenuItem);
